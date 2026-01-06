@@ -1,0 +1,20 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Production
+dist
+.next
+out
+build
+
+# Misc
+.DS_Store
+*.log
+.turbo
+.vercel
+
+# Environment
+.env
+.env.*
+!.env.example

@@ -1,0 +1,20 @@
+{
+  "name": "@jobflow/core",
+  "version": "0.0.1",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint src/**",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "ioredis": "^5.3.0",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/uuid": "^9.0.0",
+    "typescript": "^5.0.0"
+  }
+}
