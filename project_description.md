@@ -7,7 +7,7 @@
 *   **Reliable Queueing**: Hand-crafted queue implementation using Redis `BRPOPLPUSH` pattern for atomic job claiming and processing guarantees (at-least-once delivery).
 *   **Dependency Management**: Intelligent workflow orchestration supporting job hierarchies. Child jobs automatically enter a `waiting-parent` state and are unlocked only upon parent completion.
 *   **Resiliency & Recovery**: Built-in failure handling with configurable automatic retries and exponential backoff strategies.
-*   **Real-time Observability**: Next.js-based dashboard providing live insights into queue health, throughput, and job statuses via high-frequency polling.
+*   **Real-time Observability**: Next.js-based dashboard providing live insights into queue health, throughput, and job statuses via WebSockets (Socket.io) and Redis Pub/Sub.
 *   **Distributed Architecture**: Decoupled design with separate scalable components:
     *   **Core**: Shared library encapsulating queue logic and Redis interactions.
     *   **API**: Express.js gateway for high-throughput job ingestion.

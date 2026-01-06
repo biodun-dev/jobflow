@@ -68,6 +68,9 @@ export class JobQueue {
             pipeline.lpush(this.getKey('wait'), jobId);
         }
 
+        // 3. Publish event
+        pipeline.publish(`${this.prefix}:events`, JSON.stringify({ event: 'job:added', job }));
+
         await pipeline.exec();
 
         return job;

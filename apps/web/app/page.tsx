@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { io } from 'socket.io-client';
 import { toast } from 'sonner';
 
 // Types
@@ -31,6 +32,7 @@ export default function Home() {
   const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
+    // Initial fetch to populate data
     const fetchData = async () => {
       try {
         const res = await fetch('/api/stats');
@@ -41,15 +43,50 @@ export default function Home() {
         console.error(err);
       }
     };
-    
     fetchData();
-    const interval = setInterval(fetchData, 1000);
-    return () => clearInterval(interval);
+
+    // Setup WebSocket
+    const socket = io('http://localhost:4000');
+
+    socket.on('connect', () => {
+        console.log('Connected to WebSocket server');
+        toast.success('Connected to Real-time Stream');
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Disconnected from WebSocket server');
+        toast.error('Lost connection to Real-time Stream');
+    });
+
+    socket.on('job:update', (payload: { event: string, job: Job }) => {
+        console.log('Received update:', payload);
+        const { event, job } = payload;
+
+        setJobs(prev => {
+            // Update existing job or add new one
+            const exists = prev.find(j => j.id === job.id);
+            if (exists) {
+                return prev.map(j => j.id === job.id ? job : j);
+            }
+            return [job, ...prev].slice(0, 50); // Keep last 50
+        });
+
+        // Basic stat updates (for demonstration - ideally backend sends full stats)
+        setStats(prev => {
+           const newStats = { ...prev };
+           if (event === 'job:added') newStats.waitCount++;
+           if (event === 'job:active') { newStats.waitCount--; newStats.activeCount++; }
+           if (event === 'job:completed') { newStats.activeCount--; newStats.completedCount++; }
+           if (event === 'job:failed') { newStats.activeCount--; newStats.failedCount++; }
+           if (event === 'job:delayed') { newStats.activeCount--; newStats.delayedCount++; }
+           return newStats;
+        });
+    });
+
+    return () => {
+        socket.disconnect();
+    };
   }, []);
-
-
-
-// ... (inside component)
 
   const createJob = async () => {
     setIsCreating(true);
@@ -120,7 +157,7 @@ export default function Home() {
             <h2 className="text-sm font-medium text-zinc-400">Recent Activity</h2>
             <div className="flex items-center gap-2 text-xs text-zinc-600">
                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-               Live Connection
+               Real-time Socket
             </div>
           </div>
           

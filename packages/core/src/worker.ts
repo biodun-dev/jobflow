@@ -100,6 +100,7 @@ export class Worker {
         job.processedOn = Date.now();
         job.attemptsMade = (job.attemptsMade || 0) + 1; // Increment attempts
         await this.redis.set(jobKey, JSON.stringify(job)); // Checkpoint
+        await this.redis.publish(`${this.prefix}:events`, JSON.stringify({ event: 'job:active', job }));
 
         try {
             // Run User Function
@@ -138,6 +139,7 @@ export class Worker {
         pipeline.lrem(this.getKey('active'), 0, job.id); // Remove from active
         pipeline.zadd(this.getKey('delayed'), nextProcessTime, job.id); // Add to delayed ZSET
         pipeline.set(this.getJobKey(job.id), JSON.stringify(job)); // Update data
+        pipeline.publish(`${this.prefix}:events`, JSON.stringify({ event: 'job:delayed', job }));
 
         await pipeline.exec();
         console.log(`Job ${job.id} delayed until ${new Date(nextProcessTime).toISOString()}. Reason: ${error.message}`);
@@ -177,6 +179,8 @@ export class Worker {
         }
 
         await pipeline.exec();
+        // We publish AFTER exec to ensure all state changes are committed
+        await this.redis.publish(`${this.prefix}:events`, JSON.stringify({ event: 'job:completed', job }));
         console.log(`Job ${job.id} completed.`);
     }
 
@@ -191,6 +195,7 @@ export class Worker {
         pipeline.set(this.getJobKey(job.id), JSON.stringify(job));
 
         await pipeline.exec();
+        await this.redis.publish(`${this.prefix}:events`, JSON.stringify({ event: 'job:failed', job }));
         console.log(`Job ${job.id} failed.`);
     }
 
